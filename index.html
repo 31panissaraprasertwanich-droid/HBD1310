@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - จัดการงานและวางแผนการเรียน</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200 flex flex-col">
+
+    <!-- Navbar -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md">
+                    <i class="fa-solid fa-list-check text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">TaskFlow & Planner</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">จัดการงาน IEG438, IEG417 และสหกิจศึกษา</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- Theme Toggle -->
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+                <button onclick="openAddTaskModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-medium text-sm flex items-center space-x-2 shadow-md shadow-indigo-500/20 transition">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden sm:inline">เพิ่มงานใหม่</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">งานทั้งหมด</p>
+                    <h3 id="stat-total" class="text-2xl font-bold mt-1 text-slate-800 dark:text-white">0</h3>
+                </div>
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
+                    <i class="fa-solid fa-clipboard-list text-lg"></i>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">เสร็จแล้ว</p>
+                    <h3 id="stat-completed" class="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">0</h3>
+                </div>
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                    <i class="fa-solid fa-circle-check text-lg"></i>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">ค้างทำอยู่</p>
+                    <h3 id="stat-pending" class="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">0</h3>
+                </div>
+                <div class="p-3 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl">
+                    <i class="fa-solid fa-clock text-lg"></i>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">ความคืบหน้า</p>
+                    <h3 id="stat-percent" class="text-2xl font-bold mt-1 text-indigo-600 dark:text-indigo-400">0%</h3>
+                </div>
+                <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                    <i class="fa-solid fa-chart-pie text-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs & Filters -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <!-- View Tabs -->
+            <div class="flex space-x-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl w-fit">
+                <button onclick="switchView('list')" id="tab-list" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm">
+                    <i class="fa-solid fa-table-list mr-2"></i>รายการทั้งหมด
+                </button>
+                <button onclick="switchView('matrix')" id="tab-matrix" class="px-4 py-2 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <i class="fa-solid fa-chess-board mr-2"></i>Eisenhower Matrix
+                </button>
+                <button onclick="switchView('timeline')" id="tab-timeline" class="px-4 py-2 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <i class="fa-solid fa-timeline mr-2"></i>ไทม์ไลน์
+                </button>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="flex flex-wrap items-center gap-2">
+                <select id="filter-category" onchange="renderApp()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="all">ทุกหมวดหมู่</option>
+                    <option value="IEG438">IEG438 (Project Management)</option>
+                    <option value="IEG417">IEG417</option>
+                    <option value="สหกิจ">สหกิจศึกษา</option>
+                    <option value="อื่นๆ">อื่นๆ</option>
+                </select>
+                <select id="filter-status" onchange="renderApp()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="all">ทุกสถานะ</option>
+                    <option value="pending">ยังไม่เสร็จ</option>
+                    <option value="completed">เสร็จแล้ว</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- View 1: List View -->
+        <div id="view-list" class="space-y-3">
+            <!-- Dynamic Task Items Container -->
+        </div>
+
+        <!-- View 2: Eisenhower Matrix View -->
+        <div id="view-matrix" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Q1: Urgent & Important -->
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border-2 border-rose-500/30 shadow-sm">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">
+                    <h3 class="font-bold text-rose-600 dark:text-rose-400 flex items-center">
+                        <i class="fa-solid fa-bolt mr-2"></i>ทำทันที (ด่วน & สำคัญมาก)
+                    </h3>
+                    <span id="count-q1" class="text-xs bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-full font-semibold">0</span>
+                </div>
+                <div id="matrix-q1" class="space-y-2.5 min-h-[120px]"></div>
+            </div>
+            <!-- Q2: Not Urgent & Important -->
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border-2 border-amber-500/30 shadow-sm">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">
+                    <h3 class="font-bold text-amber-600 dark:text-amber-400 flex items-center">
+                        <i class="fa-solid fa-calendar-days mr-2"></i>วางแผนทำ (ไม่ด่วน & สำคัญ)
+                    </h3>
+                    <span id="count-q2" class="text-xs bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-full font-semibold">0</span>
+                </div>
+                <div id="matrix-q2" class="space-y-2.5 min-h-[120px]"></div>
+            </div>
+            <!-- Q3: Urgent & Not Important -->
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border-2 border-blue-500/30 shadow-sm">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">
+                    <h3 class="font-bold text-blue-600 dark:text-blue-400 flex items-center">
+                        <i class="fa-solid fa-share-nodes mr-2"></i>มอบหมาย/ทำทีหลัง (ด่วน & ไม่สำคัญ)
+                    </h3>
+                    <span id="count-q3" class="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full font-semibold">0</span>
+                </div>
+                <div id="matrix-q3" class="space-y-2.5 min-h-[120px]"></div>
+            </div>
+            <!-- Q4: Not Urgent & Not Important -->
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border-2 border-slate-400/30 shadow-sm">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">
+                    <h3 class="font-bold text-slate-500 dark:text-slate-400 flex items-center">
+                        <i class="fa-solid fa-trash-can mr-2"></i>ตัดทิ้ง/พักไว้ (ไม่ด่วน & ไม่สำคัญ)
+                    </h3>
+                    <span id="count-q4" class="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-full font-semibold">0</span>
+                </div>
+                <div id="matrix-q4" class="space-y-2.5 min-h-[120px]"></div>
+            </div>
+        </div>
+
+        <!-- View 3: Timeline View -->
+        <div id="view-timeline" class="hidden bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 class="text-lg font-bold mb-6 flex items-center">
+                <i class="fa-solid fa-timeline text-indigo-600 mr-2"></i>ไทม์ไลน์กำหนดส่งงาน
+            </h3>
+            <div id="timeline-container" class="border-l-2 border-indigo-500/30 pl-4 ml-2 space-y-6">
+                <!-- Timeline items -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-6 text-center text-xs text-slate-400 border-t border-slate-200 dark:border-slate-800">
+        TaskFlow Planner &copy; 2026 - จัดการโครงงานและวิชาเรียนอย่างมีประสิทธิภาพ
+    </footer>
+
+    <!-- Add/Edit Task Modal -->
+    <div id="task-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="text-lg font-bold">เพิ่มงานใหม่</h3>
+                <button onclick="closeAddTaskModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="task-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="task-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">ชื่องาน / หัวข้อ</label>
+                    <input type="text" id="task-title" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500" placeholder="เช่น ส่งแบบฝึกหัด P10 IEG438">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">หมวดหมู่วิชา</label>
+                        <select id="task-category" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="IEG438">IEG438</option>
+                            <option value="IEG417">IEG417</option>
+                            <option value="สหกิจ">สหกิจ</option>
+                            <option value="อื่นๆ">อื่นๆ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">กำหนดส่ง (Due Date)</label>
+                        <input type="date" id="task-duedate" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">ระดับความสำคัญ</label>
+                        <select id="task-priority" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="high">สูง (สำคัญ & ด่วน)</option>
+                            <option value="medium">ปานกลาง (สำคัญ แต่ไม่ด่วน)</option>
+                            <option value="low">ต่ำ (ไม่ด่วน & ไม่สำคัญ)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Quadrant (Eisenhower)</label>
+                        <select id="task-quadrant" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="q1">Q1: ทำทันที (ด่วน & สำคัญ)</option>
+                            <option value="q2">Q2: วางแผนทำ (ไม่ด่วน & สำคัญ)</option>
+                            <option value="q3">Q3: มอบหมาย/ทำทีหลัง (ด่วน & ไม่สำคัญ)</option>
+                            <option value="q4">Q4: ตัดทิ้ง/พักไว้ (ไม่ด่วน & ไม่สำคัญ)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">รายละเอียดเพิ่มเติม</label>
+                    <textarea id="task-desc" rows="3" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500" placeholder="ระบุรายละเอียดงานหรือลิงก์ส่งงานใน D-Learning"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeAddTaskModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-md shadow-indigo-500/20 transition">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Default Initial Tasks including IEG438 homeworks, placeholder for IEG417, and Co-op (สหกิจ)
+        let tasks = JSON.parse(localStorage.getItem('taskflow_tasks')) || [
+            // IEG438 Tasks from uploaded exercises
+            {
+                id: 'ieg438-p10',
+                title: 'IEG438 - แบบฝึกหัด P10 (Project Monitoring & Control)',
+                category: 'IEG438',
+                dueDate: '2026-04-10',
+                priority: 'high',
+                quadrant: 'q1',
+                completed: false,
+                desc: 'ตอบคำถาม 5 ข้อเรื่องความสำคัญของการติดตามและควบคุม, การบริหารคน, การจัดการความเปลี่ยนแปลง, การส่งมอบ และบทเรียนที่ได้เรียนรู้'
+            },
+            {
+                id: 'ieg438-p09',
+                title: 'IEG438 - แบบฝึกหัด P09 (Resource & Budget Planning)',
+                category: 'IEG438',
+                dueDate: '2026-04-03',
+                priority: 'high',
+                quadrant: 'q1',
+                completed: false,
+                desc: 'คำนวณค่าใช้จ่ายโครงการ กำหนดการเริ่มต้นเร็วสุด/ช้าสุด และวิเคราะห์ Cost Overrun / Underrun สัปดาห์ที่ 7'
+            },
+            {
+                id: 'ieg438-p08',
+                title: 'IEG438 - แบบฝึกหัด P08 (Project Crashing)',
+                category: 'IEG438',
+                dueDate: '2026-03-27',
+                priority: 'high',
+                quadrant: 'q1',
+                completed: false,
+                desc: 'เร่งงานโครงการจาก 32 วันเหลือ 28 วันด้วยค่าใช้จ่ายต่ำที่สุด กิจกรรมวิกฤต B, F, I'
+            },
+            {
+                id: 'ieg438-p07',
+                title: 'IEG438 - แบบฝึกหัด P07 (CPM-PERT & Probability)',
+                category: 'IEG438',
+                dueDate: '2026-03-20',
+                priority: 'medium',
+                quadrant: 'q2',
+                completed: true,
+                desc: 'สร้างโครงข่ายงาน หาเส้นทางวิกฤต และหาความน่าจะเป็นที่โครงงานเสร็จใน 35 วัน'
+            },
+            {
+                id: 'ieg438-p06',
+                title: 'IEG438 - แบบฝึกหัด P06 (WBS & Gantt Chart)',
+                category: 'IEG438',
+                dueDate: '2026-03-13',
+                priority: 'medium',
+                quadrant: 'q2',
+                completed: true,
+                desc: 'เขียน WBS โครงงานกลุ่มอย่างน้อย 3 ระดับ พร้อมระบุลำดับกิจกรรมหลัก'
+            },
+            // IEG417 Placeholders
+            {
+                id: 'ieg417-1',
+                title: 'IEG417 - ติดตามงาน/การบ้านและโปรเจกต์รายวิชา',
+                category: 'IEG417',
+                dueDate: '2026-04-15',
+                priority: 'high',
+                quadrant: 'q1',
+                completed: false,
+                desc: 'เพิ่มหัวข้อและรายละเอียดงานของวิชา IEG417 ที่ได้รับมอบหมาย'
+            },
+            // Coop (สหกิจ) Placeholders
+            {
+                id: 'coop-1',
+                title: 'สหกิจ - จัดเตรียมเอกสารสมัครและส่งใบสมัครสถานที่ฝึกงาน',
+                category: 'สหกิจ',
+                dueDate: '2026-04-30',
+                priority: 'high',
+                quadrant: 'q1',
+                completed: false,
+                desc: 'รวบรวมเรซูเม่ (Resume), ผลการเรียน และเอกสารขอตัวจากภาควิชา'
+            },
+            {
+                id: 'coop-2',
+                title: 'สหกิจ - ติดต่อประสานงานสถานประกอบการ/สัมภาษณ์งาน',
+                category: 'สหกิจ',
+                dueDate: '2026-05-15',
+                priority: 'medium',
+                quadrant: 'q2',
+                completed: false,
+                desc: 'รอการตอบรับการสัมภาษณ์และเตรียมตัวนำเสนอผลงาน'
+            }
+        ];
+
+        let currentView = 'list';
+
+        function saveTasks() {
+            localStorage.setItem('taskflow_tasks', JSON.stringify(tasks));
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-moon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-sun';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Init Theme
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            document.getElementById('theme-icon').className = 'fa-solid fa-sun';
+        }
+
+        function switchView(view) {
+            currentView = view;
+            ['list', 'matrix', 'timeline'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+                document.getElementById(`tab-${v}`).className = 'px-4 py-2 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+            });
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+            document.getElementById(`tab-${view}`).className = 'px-4 py-2 rounded-lg text-sm font-medium transition bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm';
+            renderApp();
+        }
+
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasks();
+                renderApp();
+            }
+        }
+
+        function deleteTask(id) {
+            if (confirm('คุณต้องการลบงานนี้ใช่หรือไม่?')) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasks();
+                renderApp();
+            }
+        }
+
+        function openAddTaskModal(id = null) {
+            document.getElementById('task-modal').classList.remove('hidden');
+            if (id) {
+                const task = tasks.find(t => t.id === id);
+                document.getElementById('modal-title').innerText = 'แก้ไขงาน';
+                document.getElementById('task-id').value = task.id;
+                document.getElementById('task-title').value = task.title;
+                document.getElementById('task-category').value = task.category;
+                document.getElementById('task-duedate').value = task.dueDate;
+                document.getElementById('task-priority').value = task.priority;
+                document.getElementById('task-quadrant').value = task.quadrant;
+                document.getElementById('task-desc').value = task.desc;
+            } else {
+                document.getElementById('modal-title').innerText = 'เพิ่มงานใหม่';
+                document.getElementById('task-form').reset();
+                document.getElementById('task-id').value = '';
+            }
+        }
+
+        function closeAddTaskModal() {
+            document.getElementById('task-modal').classList.add('hidden');
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('task-id').value;
+            const title = document.getElementById('task-title').value;
+            const category = document.getElementById('task-category').value;
+            const dueDate = document.getElementById('task-duedate').value;
+            const priority = document.getElementById('task-priority').value;
+            const quadrant = document.getElementById('task-quadrant').value;
+            const desc = document.getElementById('task-desc').value;
+
+            if (id) {
+                const task = tasks.find(t => t.id === id);
+                task.title = title;
+                task.category = category;
+                task.dueDate = dueDate;
+                task.priority = priority;
+                task.quadrant = quadrant;
+                task.desc = desc;
+            } else {
+                const newTask = {
+                    id: 'task-' + Date.now(),
+                    title,
+                    category,
+                    dueDate,
+                    priority,
+                    quadrant,
+                    completed: false,
+                    desc
+                };
+                tasks.push(newTask);
+            }
+
+            saveTasks();
+            closeAddTaskModal();
+            renderApp();
+        }
+
+        function renderApp() {
+            const filterCat = document.getElementById('filter-category').value;
+            const filterStat = document.getElementById('filter-status').value;
+
+            let filtered = tasks.filter(t => {
+                let matchCat = filterCat === 'all' || t.category === filterCat;
+                let matchStat = filterStat === 'all' || (filterStat === 'completed' ? t.completed : !t.completed);
+                return matchCat && matchStat;
+            });
+
+            // Update Stats
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.completed).length;
+            const pending = total - completed;
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-completed').innerText = completed;
+            document.getElementById('stat-pending').innerText = pending;
+            document.getElementById('stat-percent').innerText = percent + '%';
+
+            // Render List View
+            const listContainer = document.getElementById('view-list');
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="bg-white dark:bg-slate-800 p-12 rounded-2xl text-center border border-slate-200 dark:border-slate-700">
+                        <i class="fa-solid fa-clipboard-question text-4xl text-slate-300 dark:text-slate-600 mb-3"></i>
+                        <p class="text-slate-500 dark:text-slate-400 font-medium">ไม่พบรายการงานในตัวกรองนี้</p>
+                    </div>`;
+            } else {
+                listContainer.innerHTML = filtered.map(t => {
+                    const catColors = {
+                        'IEG438': 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+                        'IEG417': 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+                        'สหกิจ': 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
+                        'อื่นๆ': 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                    };
+                    const priorityBadge = {
+                        'high': '<span class="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 font-medium">ด่วน/สำคัญมาก</span>',
+                        'medium': '<span class="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 font-medium">ปานกลาง</span>',
+                        'low': '<span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 font-medium">ทั่วไป</span>'
+                    };
+
+                    return `
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-start justify-between gap-4 transition hover:border-indigo-500/50">
+                            <div class="flex items-start space-x-3.5 flex-grow">
+                                <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask('${t.id}')" class="mt-1.5 h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                                <div class="flex-grow">
+                                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                                        <span class="text-xs px-2.5 py-1 rounded-lg font-semibold ${catColors[t.category] || catColors['อื่นๆ']}">${t.category}</span>
+                                        ${priorityBadge[t.priority]}
+                                        ${t.dueDate ? `<span class="text-xs text-slate-400 flex items-center"><i class="fa-regular fa-calendar mr-1"></i>${t.dueDate}</span>` : ''}
+                                    </div>
+                                    <h4 class="font-semibold text-slate-800 dark:text-white ${t.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''}">${t.title}</h4>
+                                    ${t.desc ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${t.desc}</p>` : ''}
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="openAddTaskModal('${t.id}')" class="p-2 text-slate-400 hover:text-indigo-600 transition"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteTask('${t.id}')" class="p-2 text-slate-400 hover:text-rose-600 transition"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Render Matrix View
+            ['q1', 'q2', 'q3', 'q4'].forEach(q => {
+                const qTasks = filtered.filter(t => t.quadrant === q);
+                document.getElementById(`count-${q}`).innerText = qTasks.length;
+                const container = document.getElementById(`matrix-${q}`);
+                if (qTasks.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-4">ไม่มีงานในหมวดนี้</p>`;
+                } else {
+                    container.innerHTML = qTasks.map(t => `
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between text-sm">
+                            <div class="flex items-center space-x-2 overflow-hidden">
+                                <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask('${t.id}')" class="h-4 w-4 rounded text-indigo-600 cursor-pointer">
+                                <span class="truncate ${t.completed ? 'line-through text-slate-400' : ''}">${t.title}</span>
+                            </div>
+                            <span class="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded font-medium flex-shrink-0">${t.category}</span>
+                        </div>
+                    `).join('');
+                }
+            });
+
+            // Render Timeline View
+            const timelineContainer = document.getElementById('timeline-container');
+            const sortedByDate = [...filtered].sort((a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999'));
+            if (sortedByDate.length === 0) {
+                timelineContainer.innerHTML = `<p class="text-sm text-slate-400 italic">ไม่มีข้อมูลไทม์ไลน์</p>`;
+            } else {
+                timelineContainer.innerHTML = sortedByDate.map(t => `
+                    <div class="relative pl-6 pb-6 border-l border-slate-200 dark:border-slate-700 last:border-0 last:pb-0">
+                        <div class="absolute -left-[7px] top-0.5 h-3.5 w-3.5 rounded-full border-2 border-indigo-600 bg-white dark:bg-slate-800"></div>
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">${t.dueDate || 'ไม่ระบุวัน'}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 font-medium">${t.category}</span>
+                        </div>
+                        <h5 class="font-semibold text-sm ${t.completed ? 'line-through text-slate-400' : ''}">${t.title}</h5>
+                        ${t.desc ? `<p class="text-xs text-slate-500 mt-1">${t.desc}</p>` : ''}
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Initial Render
+        renderApp();
+    </script>
+</body>
+</html>
